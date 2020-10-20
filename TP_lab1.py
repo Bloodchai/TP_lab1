@@ -1,4 +1,5 @@
 import requests
+import json
 from sqlalchemy import create_engine, Table, Column, String, Float, MetaData
 from sqlalchemy.sql import select
 
@@ -8,27 +9,30 @@ class WeatherProvider:
         self.key = key
 
     def get_data(self, location, start_date, end_date):
-        url = 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/weatherdata/history'
+        url = 'https://api.worldweatheronline.com/premium/v1/past-weather.ashx'
         params = {
-            'aggregateHours': 24,
-            'startDateTime': f'{start_date}T00:0:00',
-            'endDateTime': f'{end_date}T23:59:59',
-            'unitGroup': 'metric',
-            'location': location,
+            'q': location,
+            'date': f'{start_date}',
+            'enddate': f'{end_date}',
+            'tp': 24,
+            'format': 'json',
             'key': self.key,
-            'contentType': 'json',
         }
         data = requests.get(url, params).json()
-        return [
-            {
-                'date': row['datetimeStr'][:10],
-                'mint': row['mint'],
-                'maxt': row['maxt'],
-                'location': 'Volgograd,Russia',
-                'humidity': row['humidity'],
-            }
-            for row in data['locations'][location]['values']
-        ]
+        with open('myWeatherData.json', 'w') as outfile:
+            json.dump(data, outfile, indent = 4)
+        print(data['data']["weather"][0]["maxtempC"])
+        # return [
+        #     {
+        #         'date': row['datetimeStr'][:10],
+        #         'mint': row['mint'],
+        #         'maxt': row['maxt'],
+        #         'location': 'Volgograd,Russia',
+        #         'humidity': row['humidity'],
+        #     }
+        #     for row in data['locations'][location]['values']
+        # ]
+        return data
 
 
 engine = create_engine('sqlite:///weather.sqlite3')
@@ -46,8 +50,8 @@ metadata.create_all(engine)
 
 c = engine.connect()
 
-provider = WeatherProvider('I3D60I88UB6KPSDAVGK38HNP5')
-c.execute(weather.insert(), provider.get_data('Volgograd,Russia', '2020-09-20', '2020-09-29'))
+provider = WeatherProvider('9882fbe5bd364ef1885201031202010')
+c.execute(weather.insert(), provider.get_data('Volgograd, Russia', '2020-09-20', '2020-09-29'))
 
-for row in c.execute(select([weather])):
-    print(row)
+#for row in c.execute(select([weather])):
+#    print(row)
