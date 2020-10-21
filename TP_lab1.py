@@ -21,17 +21,16 @@ class WeatherProvider:
         data = requests.get(url, params).json()
         with open('myWeatherData.json', 'w') as outfile:
             json.dump(data, outfile, indent = 4)
-        print(data['data']["weather"][0]["maxtempC"])
-        # return [
-        #     {
-        #         'date': row['datetimeStr'][:10],
-        #         'mint': row['mint'],
-        #         'maxt': row['maxt'],
-        #         'location': 'Volgograd,Russia',
-        #         'humidity': row['humidity'],
-        #     }
-        #     for row in data['locations'][location]['values']
-        # ]
+        return [
+            {
+                'date': row['date'][:10],
+                'mint': row['mintempC'],
+                'maxt': row['maxtempC'],
+                'location': 'Volgograd,Russia',
+                'humidity': row['hourly'][0]['humidity']
+            }
+            for row in data['data']['weather']
+        ]
         return data
 
 
@@ -53,5 +52,5 @@ c = engine.connect()
 provider = WeatherProvider('9882fbe5bd364ef1885201031202010')
 c.execute(weather.insert(), provider.get_data('Volgograd, Russia', '2020-09-20', '2020-09-29'))
 
-#for row in c.execute(select([weather])):
-#    print(row)
+for row in c.execute(select([weather])):
+    print(row)
