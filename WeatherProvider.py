@@ -28,4 +28,3 @@ class WeatherProvider:
             }
             for row in data['data']['weather']
         ]
-        return data
